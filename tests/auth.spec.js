@@ -1,30 +1,34 @@
-import supertest from 'supertest';
 import { expect } from 'chai';
-
-import { config } from 'dotenv';
-config();
+import AuthHelper from "../helpers/auth.helper";
 
 describe('auth', function() {
-    const request = supertest(process.env.BASE_URL);
-    it('successful log in', function() {
-        request
-            .post('/auth')
-            .send({ login: process.env.LOGIN, password: process.env.PASSWORD })
-            .send({ login: 'adminius', password: 'supers3cret' })
-            .end(function(err, res) {
-                expect(res.statusCode).to.eq(200);
-                expect(res.body.token).not.to.be.undefined;
-            });
+    let authHelper = new AuthHelper();
+
+    describe('successful log in', function() {
+        before(async function() {
+            await authHelper.get(process.env.LOGIN, process.env.PASSWORD);
+        });
+
+        it('response status code is 200', function() {
+            expect(authHelper.response.statusCode).to.eq(200);
+        });
+
+        it('response body contains authorization token', function() {
+            expect(authHelper.response.body.token).not.to.be.undefined;
+        })
     });
 
-it('log in with wrong credentials should return error', function() {
-    request
-        .post('/auth')
-        .send({ login: 'wrong', password: 'wrong' })
-        .end(function(err, res) {
-            expect(res.statusCode).to.eq(404);
-            expect(res.body.message).to.eq('Wrong login or password.');
+    describe('log in with wrong credentials should return error', function() {
+        before(async function() {
+            await authHelper.get('invalid', 'invalid');
+        });
+
+        it('response status code is 404', function() {
+            expect(authHelper.response.statusCode).to.eq(404);
+        });
+
+        it('response status code is 404', function() {
+            expect(authHelper.response.body.message).to.eq('Wrong login or password.');
         });
     })
 });
-
